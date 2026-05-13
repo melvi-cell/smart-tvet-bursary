@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart TVET Bursary | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="logo-text">
+                    <h2>TVET<span>Bursary</span></h2>
+                    <p>Smart Allocation System</p>
+                </div>
+            </div>
+            
+            <div class="user-profile-side">
+                <img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=Guest" alt="Avatar">
+                <div>
+                    <h4 id="sidebarUserName">Guest User</h4>
+                    <span id="sidebarUserStatus">Not logged in</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="applicant-signup.html" class="nav-item">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Applicant Signup</span>
+                </a>
+                <a href="applicant-login.html" class="nav-item">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Applicant Login</span>
+                </a>
+                <a href="admin-login.html" class="nav-item">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin Login</span>
+                </a>
+                <a href="status-tracking.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Track Status</span>
+                </a>
+                <a href="admin-review.html" class="nav-item">
+                    <i class="fas fa-check-double"></i>
+                    <span>Admin Review</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-print"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="analytics.html" class="nav-item">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="darkModeToggle" class="dark-mode-btn">
+                    <i class="fas fa-sun"></i>
+                    <span>Light Mode</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard Overview</h1>
+                    <p class="page-subtitle">Welcome back to Smart TVET Bursary Management System</p>
+                </div>
+                <div class="header-actions">
+                    <div class="notification-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge" id="notifBadge">0</span>
+                    </div>
+                    <div class="user-info">
+                        <img src="https://ui-avatars.com/api/?background=0a2b4e&color=fff&name=G" alt="User">
+                        <span id="headerUserName">Guest</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-details">
+                        <h3>Total Applicants</h3>
+                        <div class="stat-number" id="totalApplicants">0</div>
+                        <span class="stat-trend"><i class="fas fa-arrow-up"></i> +12%</span>
+                    </div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-details">
+                        <h3>Approved</h3>
+                        <div class="stat-number" id="approvedCount">0</div>
+                        <span class="stat-trend"><i class="fas fa-arrow-up"></i> +8%</span>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="stat-details">
+                        <h3>Pending Review</h3>
+                        <div class="stat-number" id="pendingCount">0</div>
+                        <span class="stat-trend"><i class="fas fa-clock"></i> Awaiting</span>
+                    </div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-details">
+                        <h3>Total Disbursed</h3>
+                        <div class="stat-number" id="totalDisbursed">0</div>
+                        <span class="stat-trend">KES</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-card">
+                <div class="ai-header">
+                    <i class="fas fa-robot"></i>
+                    <div>
+                        <h3>AI Eligibility Checker</h3>
+                        <p>Smart eligibility prediction based on financial and academic data</p>
+                    </div>
+                </div>
+                <div class="ai-form">
+                    <div class="input-group">
+                        <input type="number" id="annualIncome" placeholder="Annual Household Income (KES)">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="academicScore" placeholder="Academic Score (0-100)">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <button onclick="checkEligibility()" class="btn-gradient">
+                        <i class="fas fa-magic"></i> Check Eligibility
+                    </button>
+                </div>
+                <div id="eligibilityResult" class="eligibility-result"></div>
+            </div>
+
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3><i class="fas fa-history"></i> Recent Applications</h3>
+                    <button class="btn-outline-sm" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="recentAppsTable">
+                        <thead>
+                            <tr><th>ID</th><th>Name</th><th>Institution</th><th>Amount</th><th>Status</th><th>QR Code</th></tr>
+                        </thead>
+                        <tbody id="recentAppsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="app.js"></script>
+    <script>
+        function updateDashboardStats() {
+            let applicants = JSON.parse(localStorage.getItem('applicants')) || [];
+            let applications = JSON.parse(localStorage.getItem('applications')) || [];
+            document.getElementById('totalApplicants').innerText = applicants.length;
+            document.getElementById('approvedCount').innerText = applications.filter(a => a.status === 'approved').length;
+            document.getElementById('pendingCount').innerText = applications.filter(a => a.status === 'pending').length;
+            let total = applications.filter(a => a.status === 'approved').reduce((sum, a) => sum + (a.amount || 0), 0);
+            document.getElementById('totalDisbursed').innerText = total.toLocaleString();
+            
+            let recent = applications.slice(-5).reverse();
+            let body = document.getElementById('recentAppsBody');
+            body.innerHTML = '';
+            recent.forEach(app => {
+                let statusClass = app.status === 'approved' ? 'status-badge approved' : (app.status === 'pending' ? 'status-badge pending' : 'status-badge rejected');
+                let row = `<tr>
+                    <td><span class="app-id">${app.id || 'N/A'}</span></td>
+                    <td><strong>${app.fullname || 'N/A'}</strong></td>
+                    <td>${app.institution || 'N/A'}</td>
+                    <td class="amount">KES ${(app.amount || 0).toLocaleString()}</td>
+                    <td><span class="${statusClass}">${app.status}</span></td>
+                    <td><div class="mini-qr" data-id="${app.id}"></div></td>
+                </tr>`;
+                body.innerHTML += row;
+            });
+            setTimeout(() => {
+                document.querySelectorAll('.mini-qr').forEach(el => {
+                    if(el.dataset.id && !el.hasChildNodes()) {
+                        new QRCode(el, { text: `BURSARY-${el.dataset.id}`, width: 40, height: 40 });
+                    }
+                });
+            }, 100);
+        }
+        
+        function checkEligibility() {
+            let income = document.getElementById('annualIncome').value;
+            let score = document.getElementById('academicScore').value;
+            let result = document.getElementById('eligibilityResult');
+            if(!income || !score) {
+                result.innerHTML = '<div class="alert-error"><i class="fas fa-exclamation-triangle"></i> Please enter both fields</div>';
+                result.style.display = 'block';
+                setTimeout(() => { result.style.display = 'none'; }, 3000);
+                return;
+            }
+            if(income < 300000 && score >= 60) {
+                result.innerHTML = '<div class="alert-success"><i class="fas fa-check-circle"></i> Highly Eligible! You likely qualify for full bursary.</div>';
+            } else if(income < 500000 && score >= 50) {
+                result.innerHTML = '<div class="alert-warning"><i class="fas fa-chart-line"></i> Partially Eligible. You may qualify for partial funding.</div>';
+            } else {
+                result.innerHTML = '<div class="alert-error"><i class="fas fa-times-circle"></i> Low Eligibility. Consider alternative funding sources.</div>';
+            }
+            result.style.display = 'block';
+            setTimeout(() => { result.style.display = 'none'; }, 5000);
+        }
+        
+        function refreshData() { updateDashboardStats(); }
+        
+        function updateUserUI() {
+            let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+            if(currentUser) {
+                document.getElementById('sidebarUserName').innerText = currentUser.fullname?.split(' ')[0] || 'User';
+                document.getElementById('sidebarUserStatus').innerText = 'Logged in';
+                document.getElementById('headerUserName').innerText = currentUser.fullname?.split(' ')[0] || 'User';
+                const userImg = document.querySelector('.user-info img');
+                if(userImg) userImg.src = `https://ui-avatars.com/api/?background=0a2b4e&color=fff&name=${currentUser.fullname?.charAt(0) || 'U'}`;
+                const sidebarImg = document.querySelector('.user-profile-side img');
+                if(sidebarImg) sidebarImg.src = `https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=${currentUser.fullname?.charAt(0) || 'G'}`;
+            } else {
+                document.getElementById('sidebarUserName').innerText = 'Guest User';
+                document.getElementById('sidebarUserStatus').innerText = 'Not logged in';
+                document.getElementById('headerUserName').innerText = 'Guest';
+            }
+        }
+        
+        updateDashboardStats();
+        updateUserUI();
+        window.checkEligibility = checkEligibility;
+        window.refreshData = refreshData;
+    </script>
+</body>
+</html>

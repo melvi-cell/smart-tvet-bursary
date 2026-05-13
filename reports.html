@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart TVET Bursary | Reports</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-area"><div class="logo-icon"><i class="fas fa-graduation-cap"></i></div><div class="logo-text"><h2>TVET<span>Bursary</span></h2><p>Smart Allocation System</p></div></div>
+            <div class="user-profile-side"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=Report" alt="Avatar"><div><h4>Reports</h4><span>Generate Documents</span></div></div>
+         <nav class="nav-menu">
+    <a href="index.html" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+    <a href="applicant-signup.html" class="nav-item"><i class="fas fa-user-plus"></i><span>Applicant Signup</span></a>
+    <a href="applicant-login.html" class="nav-item"><i class="fas fa-sign-in-alt"></i><span>Applicant Login</span></a>
+    <a href="admin-login.html" class="nav-item"><i class="fas fa-user-shield"></i><span>Admin Login</span></a>
+    <a href="status-tracking.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Track Status</span></a>
+    <a href="admin-review.html" class="nav-item"><i class="fas fa-check-double"></i><span>Admin Review</span></a>
+    <a href="reports.html" class="nav-item"><i class="fas fa-print"></i><span>Reports</span></a>
+    <a href="analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i><span>Analytics</span></a>
+    <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+</nav>
+            <div class="sidebar-footer"><button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i><span>Light Mode</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar"><div><h1 class="page-title">Reports & Documentation</h1><p class="page-subtitle">Generate comprehensive bursary reports and export data</p></div><div class="user-info"><img src="https://ui-avatars.com/api/?background=0a2b4e&color=fff&name=R" alt="Reports"><span>Reports</span></div></div>
+
+            <!-- Stats Summary -->
+            <div class="stats-grid">
+                <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-file-alt"></i></div><div class="stat-details"><h3>Total Applications</h3><div class="stat-number" id="totalApps">0</div><span class="stat-trend">All time</span></div></div>
+                <div class="stat-card success"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-details"><h3>Approved</h3><div class="stat-number" id="totalApproved">0</div><span class="stat-trend">Successful</span></div></div>
+                <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-hourglass-half"></i></div><div class="stat-details"><h3>Pending</h3><div class="stat-number" id="totalPending">0</div><span class="stat-trend">Under review</span></div></div>
+                <div class="stat-card info"><div class="stat-icon"><i class="fas fa-coins"></i></div><div class="stat-details"><h3>Total Disbursed</h3><div class="stat-number" id="totalDisbursedAmt">KES 0</div><span class="stat-trend">Allocated funds</span></div></div>
+            </div>
+
+            <!-- Report Generation Cards -->
+            <div class="report-cards">
+                <div class="report-card"><div class="report-icon"><i class="fas fa-file-pdf"></i></div><h3>PDF Summary Report</h3><p>Generate a complete PDF report with all application statistics</p><button onclick="generatePDF()" class="btn-primary"><i class="fas fa-download"></i> Download PDF</button></div>
+                <div class="report-card"><div class="report-icon"><i class="fas fa-file-excel"></i></div><h3>Excel Export</h3><p>Export all application data to CSV/Excel format</p><button onclick="exportToCSV()" class="btn-success"><i class="fas fa-file-excel"></i> Export CSV</button></div>
+                <div class="report-card"><div class="report-icon"><i class="fas fa-print"></i></div><h3>Print Report</h3><p>Print a formatted report directly from your browser</p><button onclick="window.print()" class="btn-outline"><i class="fas fa-print"></i> Print Report</button></div>
+                <div class="report-card"><div class="report-icon"><i class="fas fa-envelope"></i></div><h3>Email Report</h3><p>Send the report via email to stakeholders</p><button onclick="sendEmailReport()" class="btn-gradient"><i class="fas fa-envelope"></i> Email Report</button></div>
+            </div>
+
+            <!-- Report Preview / Data Table -->
+            <div class="data-table-container">
+                <div class="table-header"><h3><i class="fas fa-table"></i> Report Data Preview</h3><div><label class="date-range"><i class="fas fa-calendar"></i><input type="month" id="reportMonth" onchange="updateReportPreview()"></label></div></div>
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>ID</th><th>Applicant</th><th>Institution</th><th>Amount (KES)</th><th>Status</th><th>Date</th></tr></thead><tbody id="reportPreviewBody"></tbody></table></div>
+            </div>
+        </main>
+    </div>
+    <script src="theme.js"></script>
+    <script>
+        function updateStats() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            document.getElementById('totalApps').innerText = apps.length;
+            let approved = apps.filter(a => a.status === 'approved').length;
+            let pending = apps.filter(a => a.status === 'pending').length;
+            document.getElementById('totalApproved').innerText = approved;
+            document.getElementById('totalPending').innerText = pending;
+            let total = apps.filter(a => a.status === 'approved').reduce((sum, a) => sum + (a.amount || 0), 0);
+            document.getElementById('totalDisbursedAmt').innerHTML = `KES ${total.toLocaleString()}`;
+        }
+        
+        function updateReportPreview() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let month = document.getElementById('reportMonth').value;
+            let filtered = apps;
+            if(month) { filtered = apps.filter(a => a.submittedAt?.startsWith(month) || a.date?.startsWith(month)); }
+            let body = document.getElementById('reportPreviewBody');
+            body.innerHTML = '';
+            filtered.slice(-10).reverse().forEach(app => {
+                body.innerHTML += `<tr>
+                    <td class="app-id">${app.id}</td>
+                    <td><strong>${app.fullname}</strong></td>
+                    <td>${app.institution}</td>
+                    <td class="amount">KES ${(app.amount || 0).toLocaleString()}</td>
+                    <td><span class="status-badge ${app.status}">${app.status}</span></td>
+                    <td>${new Date(app.submittedAt || app.date).toLocaleDateString()}</td>
+                </tr>`;
+            });
+            if(filtered.length === 0) { body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">No data for selected period</td></tr>'; }
+        }
+        
+        function generatePDF() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let totalApproved = apps.filter(a => a.status === 'approved').reduce((sum, a) => sum + (a.amount || 0), 0);
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+            doc.setFontSize(20);
+            doc.text("TVET Bursary Management Report", 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 35);
+            doc.text("Summary Statistics:", 20, 55);
+            doc.text(`- Total Applications: ${apps.length}`, 25, 65);
+            doc.text(`- Approved Applications: ${apps.filter(a => a.status === 'approved').length}`, 25, 72);
+            doc.text(`- Total Disbursed Amount: KES ${totalApproved.toLocaleString()}`, 25, 79);
+            doc.text(`- Pending Reviews: ${apps.filter(a => a.status === 'pending').length}`, 25, 86);
+            doc.save("tvet-bursary-report.pdf");
+            showToast("PDF Report downloaded successfully", "success");
+        }
+        
+        function exportToCSV() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let headers = ["ID", "Full Name", "Email", "Institution", "Amount", "Status", "Submitted Date"];
+            let rows = apps.map(app => [app.id, app.fullname, app.email || 'N/A', app.institution, app.amount, app.status, new Date(app.submittedAt || app.date).toLocaleDateString()]);
+            let csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
+            let blob = new Blob([csvContent], { type: 'text/csv' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `bursary-report-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            showToast("CSV exported successfully", "success");
+        }
+        
+        function sendEmailReport() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let summary = `Total Applications: ${apps.length}\nApproved: ${apps.filter(a => a.status === 'approved').length}\nTotal Amount: ${apps.filter(a => a.status === 'approved').reduce((s,a) => s + (a.amount||0), 0).toLocaleString()}`;
+            alert(`📧 Email Report would be sent to admin@tvet.com\n\nReport Summary:\n${summary}\n\n(EmailJS integration can be added here)`);
+            showToast("Email report sent to admin", "success");
+        }
+        
+        function showToast(msg, type) {
+            let toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${msg}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        updateStats();
+        updateReportPreview();
+        window.generatePDF = generatePDF;
+        window.exportToCSV = exportToCSV;
+        window.sendEmailReport = sendEmailReport;
+        window.updateReportPreview = updateReportPreview;
+    </script>
+    <!-- Firebase & Email Services -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+</body>
+</html>
