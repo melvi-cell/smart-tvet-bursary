@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Documents | SMART TVET System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <script>if(!localStorage.getItem('currentApplicant')) window.location.href = 'index.html';</script>
+
+    <div class="sidebar">
+        <div class="logo-area"><h2>SMART TVET<span>System</span></h2><small>Student Portal</small></div>
+        <div class="user-header"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=User" class="user-avatar" id="sidebarAvatar"><h4 id="userName">Loading...</h4><small id="userEmail">Student</small></div>
+        <nav class="nav-menu">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="apply-loan.html"><i class="fas fa-money-bill-wave"></i> Apply for Loan</a>
+            <a href="apply-scholarship.html"><i class="fas fa-graduation-cap"></i> Scholarship/Bursary</a>
+            <a href="status.html"><i class="fas fa-chart-line"></i> Application Status</a>
+            <a href="documents.html" class="active"><i class="fas fa-file-upload"></i> My Documents</a>
+            <a href="repayment.html"><i class="fas fa-coins"></i> Repayment Info</a>
+            <a href="profile.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i> Light Mode</button>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar"><div><h1 class="page-title">Document Management</h1><p class="page-subtitle">Upload and manage your supporting documents</p></div></div>
+
+        <div class="info-banner info-banner-green">
+            <i class="fas fa-check-circle"></i>
+            <div><strong>Required Documents (6 total):</strong> You must upload ALL documents to apply for a loan or scholarship. Uploaded documents are saved and can be reused.<br>
+            <strong>File Format Requirements:</strong> 
+            <ul style="margin-top: 8px; margin-left: 20px;">
+                <li>National ID: JPG, JPEG, PNG, BMP</li>
+                <li>Admission Letter: PDF, DOC, DOCX</li>
+                <li>Fee Structure: PDF, DOC, DOCX</li>
+                <li>KCSE Certificate: PDF only</li>
+                <li>Parent/Guardian ID: JPG, JPEG, PNG, BMP</li>
+                <li>Bank/M-Pesa Details: PDF, TXT</li>
+            </ul>
+            </div>
+        </div>
+
+        <div class="documents-grid">
+            <!-- National ID -->
+            <div class="document-card">
+                <div class="doc-icon"><i class="fas fa-id-card"></i></div>
+                <h4>National ID</h4>
+                <p>Front and back copy of National ID</p>
+                <p class="file-format">Allowed: JPG, JPEG, PNG, BMP</p>
+                <div class="doc-status" id="idStatus">Not Uploaded</div>
+                <input type="file" id="idUpload" accept=".jpg,.jpeg,.png,.bmp" style="display:none">
+                <button class="btn-outline-sm" onclick="document.getElementById('idUpload').click()">Upload</button>
+            </div>
+
+            <!-- Admission Letter -->
+            <div class="document-card">
+                <div class="doc-icon"><i class="fas fa-envelope-open-text"></i></div>
+                <h4>Admission Letter</h4>
+                <p>University/TVET admission letter</p>
+                <p class="file-format">Allowed: PDF, DOC, DOCX</p>
+                <div class="doc-status" id="admissionStatus">Not Uploaded</div>
+                <input type="file" id="admissionUpload" accept=".pdf,.doc,.docx" style="display:none">
+                <button class="btn-outline-sm" onclick="document.getElementById('admissionUpload').click()">Upload</button>
+            </div>
+
+            <!-- Fee Structure -->
+            <div class="document-card">
+                <div class="doc-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                <h4>Fee Structure</h4>
+                <p>Institution fee breakdown</p>
+                <p class="file-format">Allowed: PDF, DOC, DOCX</p>
+                <div class="doc-status" id="feeStatus">Not Uploaded</div>
+                <input type="file" id="feeUpload" accept=".pdf,.doc,.docx" style="display:none">
+                <button class="btn-outline-sm" onclick="document.getElementById('feeUpload').click()">Upload</button>
+            </div>
+
+            <!-- KCSE Certificate -->
+            <div class="document-card">
+                <div class="doc-icon"><i class="fas fa-certificate"></i></div>
+                <h4>KCSE Certificate</h4>
+                <p>Secondary education certificate</p>
+                <p class="file-format">Allowed: PDF only</p>
+                <div class="doc-status" id="kcseStatus">Not Uploaded</div>
+                <input type="file" id="kcseUpload" accept=".pdf" style="display:none">
+                <button class="btn-outline-sm" onclick="document.getElementById('kcseUpload').click()">Upload</button>
+            </div>
+
+            <!-- Parent/Guardian ID -->
+            <div class="document-card">
+                <div class="doc-icon"><i class="fas fa-id-card"></i></div>
+                <h4>Parent/Guardian ID</h4>
+                <p>Parent or guardian ID copy</p>
+                <p class="file-format">Allowed: JPG, JPEG, PNG, BMP</p>
+                <div class="doc-status" id="parentIdStatus">Not Uploaded</div>
+                <input type="file" id="parentIdUpload" accept=".jpg,.jpeg,.png,.bmp" style="display:none">
+                <button class="btn-outline-sm" onclick="document.getElementById('parentIdUpload').click()">Upload</button>
+            </div>
+
+            <!-- Bank/M-Pesa Details -->
+            <div class="document-card">
+                <div class="doc-icon"><i class="fas fa-university"></i></div>
+                <h4>Bank/M-Pesa Details</h4>
+                <p>For upkeep disbursement</p>
+                <p class="file-format">Allowed: PDF, TXT</p>
+                <div class="doc-status" id="bankStatus">Not Uploaded</div>
+                <input type="file" id="bankUpload" accept=".pdf,.txt" style="display:none">
+                <button class="btn-outline-sm" onclick="document.getElementById('bankUpload').click()">Upload</button>
+            </div>
+        </div>
+
+        <!-- Upload Progress Summary -->
+        <div class="form-container" style="margin-top: 30px;">
+            <h3>Document Upload Progress</h3>
+            <div class="progress-bar"><div class="progress-fill" id="uploadProgressFill" style="width: 0%; background: #10b981;"></div></div>
+            <div id="uploadSummary" style="margin-top: 15px; text-align: center;"></div>
+        </div>
+    </main>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="theme.js"></script>
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+        document.getElementById('userName').innerText = currentUser.fullname || 'Student';
+        document.getElementById('userEmail').innerText = currentUser.email || '';
+
+        let documents = JSON.parse(localStorage.getItem('userDocuments')) || {};
+
+        // File type validation
+        function validateFile(file, allowedExtensions) {
+            const fileName = file.name;
+            const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+            return allowedExtensions.includes(fileExt);
+        }
+
+        function getFileTypeMessage(docName) {
+            const types = {
+                'National ID': '.jpg, .jpeg, .png, .bmp',
+                'Admission Letter': '.pdf, .doc, .docx',
+                'Fee Structure': '.pdf, .doc, .docx',
+                'KCSE Certificate': '.pdf',
+                'Parent/Guardian ID': '.jpg, .jpeg, .png, .bmp',
+                'Bank/M-Pesa Details': '.pdf, .txt'
+            };
+            return types[docName] || 'Unknown format';
+        }
+
+        function updateDocumentStatus() {
+            let requiredDocs = ['National ID', 'Admission Letter', 'Fee Structure', 'KCSE Certificate', 'Parent/Guardian ID', 'Bank/M-Pesa Details'];
+            let uploaded = requiredDocs.filter(doc => documents[doc]).length;
+            let percent = (uploaded / requiredDocs.length) * 100;
+            
+            document.getElementById('uploadProgressFill').style.width = percent + '%';
+            document.getElementById('uploadSummary').innerHTML = `<strong>${uploaded} of ${requiredDocs.length} documents uploaded</strong><br>
+                ${uploaded === requiredDocs.length ? '<span style="color:#10b981;">✅ All documents uploaded! You can now apply for a loan or scholarship.</span>' : '<span style="color:#f59e0b;">⚠️ Please upload all required documents to complete your application.</span>'}`;
+            
+            // Update individual status colors
+            requiredDocs.forEach(doc => {
+                let statusId = doc.toLowerCase().replace(/[-\/ ]/g, '');
+                if(doc === 'National ID') statusId = 'idStatus';
+                else if(doc === 'Admission Letter') statusId = 'admissionStatus';
+                else if(doc === 'Fee Structure') statusId = 'feeStatus';
+                else if(doc === 'KCSE Certificate') statusId = 'kcseStatus';
+                else if(doc === 'Parent/Guardian ID') statusId = 'parentIdStatus';
+                else if(doc === 'Bank/M-Pesa Details') statusId = 'bankStatus';
+                
+                let el = document.getElementById(statusId);
+                if(el) {
+                    if(documents[doc]) {
+                        el.innerHTML = '✅ Uploaded';
+                        el.style.color = '#10b981';
+                    } else {
+                        el.innerHTML = '❌ Not Uploaded';
+                        el.style.color = '#ef4444';
+                    }
+                }
+            });
+        }
+
+        function setupUpload(uploadId, docName, statusId, allowedExtensions) {
+            document.getElementById(uploadId).addEventListener('change', function(e) {
+                if(e.target.files[0]) {
+                    const file = e.target.files[0];
+                    
+                    // Validate file type
+                    if(!validateFile(file, allowedExtensions)) {
+                        alert(`❌ Invalid file format for ${docName}!\n\nAllowed formats: ${getFileTypeMessage(docName)}\n\nPlease convert and try again.`);
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Validate file size (max 5MB)
+                    if(file.size > 5 * 1024 * 1024) {
+                        alert(`❌ File too large! Maximum size is 5MB.\n\nPlease compress the file and try again.`);
+                        this.value = '';
+                        return;
+                    }
+                    
+                    let fileName = file.name;
+                    documents[docName] = { name: fileName, date: new Date().toISOString(), status: 'uploaded', size: file.size };
+                    localStorage.setItem('userDocuments', JSON.stringify(documents));
+                    updateDocumentStatus();
+                    alert(`✅ ${docName} uploaded successfully!\n\nFile: ${fileName}\nSize: ${(file.size / 1024).toFixed(2)} KB`);
+                }
+            });
+        }
+
+        // Setup uploads with specific allowed extensions
+        setupUpload('idUpload', 'National ID', 'idStatus', ['.jpg', '.jpeg', '.png', '.bmp']);
+        setupUpload('admissionUpload', 'Admission Letter', 'admissionStatus', ['.pdf', '.doc', '.docx']);
+        setupUpload('feeUpload', 'Fee Structure', 'feeStatus', ['.pdf', '.doc', '.docx']);
+        setupUpload('kcseUpload', 'KCSE Certificate', 'kcseStatus', ['.pdf']);
+        setupUpload('parentIdUpload', 'Parent/Guardian ID', 'parentIdStatus', ['.jpg', '.jpeg', '.png', '.bmp']);
+        setupUpload('bankUpload', 'Bank/M-Pesa Details', 'bankStatus', ['.pdf', '.txt']);
+
+        function updateSidebarAvatar() {
+            let savedPhoto = localStorage.getItem('userProfilePhoto');
+            let sidebarAvatar = document.getElementById('sidebarAvatar');
+            
+            if(savedPhoto && sidebarAvatar) {
+                sidebarAvatar.src = savedPhoto;
+            } else if(sidebarAvatar && currentUser) {
+                sidebarAvatar.src = `https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=${encodeURIComponent(currentUser.fullname || 'User')}`;
+            }
+        }
+
+        function logout() { localStorage.removeItem('currentApplicant'); window.location.href = 'index.html'; }
+        
+        updateDocumentStatus();
+        updateSidebarAvatar();
+        window.logout = logout;
+    </script>
+</body>
+</html>

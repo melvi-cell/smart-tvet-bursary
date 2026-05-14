@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Status | SMART TVET System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <script>if(!localStorage.getItem('currentApplicant')) window.location.href = 'index.html';</script>
+
+    <div class="sidebar">
+        <div class="logo-area"><h2>SMART TVET<span>System</span></h2><small>Student Portal</small></div>
+        <div class="user-header"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=User"class="user-avatar" id="sidebarAvatar"><h4 id="userName">Loading...</h4><small id="userEmail">Student</small></div>
+        <nav class="nav-menu">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="apply-loan.html"><i class="fas fa-money-bill-wave"></i> Apply for Loan</a>
+            <a href="apply-scholarship.html"><i class="fas fa-graduation-cap"></i> Scholarship/Bursary</a>
+            <a href="status.html" class="active"><i class="fas fa-chart-line"></i> Application Status</a>
+            <a href="documents.html"><i class="fas fa-file-upload"></i> My Documents</a>
+            <a href="repayment.html"><i class="fas fa-coins"></i> Repayment Info</a>
+            <a href="profile.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i> Light Mode</button>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar">
+            <div><h1 class="page-title">Application Status</h1><p class="page-subtitle">Monitor your bursary and loan applications</p></div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-spinner"></i></div><div><h3>Pending Applications</h3><div class="stat-number" id="pendingCount">0</div></div></div>
+            <div class="stat-card success"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div><h3>Approved</h3><div class="stat-number" id="approvedCount">0</div></div></div>
+            <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div><h3>Total Applications</h3><div class="stat-number" id="totalCount">0</div></div></div>
+        </div>
+
+        <!-- Search Box -->
+        <div class="form-container" style="max-width: 100%;">
+            <div class="search-box" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div class="input-group" style="flex: 1;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchId" placeholder="Enter Application ID (e.g., LOAN-12345, SCH-12345) or National ID">
+                </div>
+                <button onclick="trackStatus()" class="btn-gradient"><i class="fas fa-chart-line"></i> Track Application</button>
+            </div>
+            <div id="statusResult"></div>
+            <div id="qrContainer" style="margin-top: 20px; text-align: center;"></div>
+        </div>
+
+        <!-- All Applications Table -->
+        <div class="data-table-container" style="margin-top: 30px;">
+            <div class="table-header">
+                <h3><i class="fas fa-list-ul"></i> All My Applications</h3>
+                <button onclick="loadAllApplications()" class="btn-outline-sm"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>ID</th><th>Type</th><th>Institution</th><th>Amount</th><th>Status</th><th>Date</th><th>QR</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="applicationsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="theme.js"></script>
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+        document.getElementById('userName').innerText = currentUser.fullname || 'Student';
+        document.getElementById('userEmail').innerText = currentUser.email || '';
+
+        // Load all applications for the user
+        function loadAllApplications() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let userApps = apps.filter(a => a.email === currentUser.email || a.nationalId === currentUser.nationalId);
+            
+            // Update stats
+            document.getElementById('pendingCount').innerText = userApps.filter(a => a.status === 'pending').length;
+            document.getElementById('approvedCount').innerText = userApps.filter(a => a.status === 'approved').length;
+            document.getElementById('totalCount').innerText = userApps.length;
+            
+            let body = document.getElementById('applicationsBody');
+            body.innerHTML = '';
+            
+            userApps.slice().reverse().forEach(app => {
+                let typeIcon = app.type === 'loan' ? '💰 Loan' : (app.type === 'scholarship' ? '🎓 Scholarship' : '📚 Bursary');
+                let statusClass = app.status === 'approved' ? 'status-badge approved' : (app.status === 'pending' ? 'status-badge pending' : 'status-badge rejected');
+                
+                body.innerHTML += `<tr>
+                    <td class="app-id">${app.id}</td>
+                    <td>${typeIcon}</td>
+                    <td>${app.institution || 'N/A'}</td>
+                    <td class="amount">KES ${(app.amount || 0).toLocaleString()}</td>
+                    <td><span class="${statusClass}">${app.status}</span></td>
+                    <td>${new Date(app.submittedAt).toLocaleDateString()}</td>
+                    <td><div class="mini-qr" data-id="${app.id}"></div></td>
+                    <td><button class="btn-outline-sm" onclick="viewDetails('${app.id}')">View</button></td>
+                </tr>`;
+            });
+            
+            if(userApps.length === 0) {
+                body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px;">No applications found. Apply for a loan or scholarship!</td></tr>';
+            }
+            
+            // Generate QR codes
+            setTimeout(() => {
+                document.querySelectorAll('.mini-qr').forEach(el => {
+                    if(el.dataset.id && !el.hasChildNodes()) {
+                        new QRCode(el, { text: `APP-${el.dataset.id}`, width: 40, height: 40 });
+                    }
+                });
+            }, 100);
+        }
+
+        // Track specific application
+        function trackStatus() {
+            let search = document.getElementById('searchId').value;
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let app = apps.find(a => a.id === search || a.nationalId === search);
+            let resultDiv = document.getElementById('statusResult');
+            
+            if(!app) {
+                resultDiv.innerHTML = '<div class="alert-error">No application found with the provided ID.</div>';
+                setTimeout(() => resultDiv.innerHTML = '', 3000);
+                return;
+            }
+            
+            let typeIcon = app.type === 'loan' ? '💰' : (app.type === 'scholarship' ? '🎓' : '📚');
+            let statusIcon = app.status === 'approved' ? 'fa-check-circle' : (app.status === 'pending' ? 'fa-hourglass-half' : 'fa-times-circle');
+            let statusColor = app.status === 'approved' ? '#10b981' : (app.status === 'pending' ? '#f59e0b' : '#ef4444');
+            
+            resultDiv.innerHTML = `
+                <div class="status-card" style="margin-top: 20px;">
+                    <div class="status-header">
+                        <i class="fas ${statusIcon}" style="font-size: 2rem; color: ${statusColor};"></i>
+                        <div>
+                            <h3>${typeIcon} Application: ${app.id}</h3>
+                            <p>Submitted: ${new Date(app.submittedAt).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="status-details">
+                        <div class="detail-row"><span>Applicant:</span><strong>${app.fullname}</strong></div>
+                        <div class="detail-row"><span>Institution:</span><strong>${app.institution}</strong></div>
+                        <div class="detail-row"><span>Course:</span><strong>${app.course || 'N/A'}</strong></div>
+                        <div class="detail-row"><span>Amount Requested:</span><strong>KES ${(app.amount || 0).toLocaleString()}</strong></div>
+                        <div class="detail-row"><span>Status:</span><span class="status-badge ${app.status}">${app.status.toUpperCase()}</span></div>
+                        ${app.type === 'loan' ? `
+                        <div class="detail-row"><span>Tuition Fee:</span><strong>KES ${(app.tuitionFee || 0).toLocaleString()}</strong></div>
+                        <div class="detail-row"><span>Upkeep Allowance:</span><strong>KES ${(app.upkeep || 0).toLocaleString()}</strong></div>
+                        <div class="detail-row"><span>Disbursement:</span><strong>${app.disbursement || 'To be confirmed'}</strong></div>
+                        ` : ''}
+                        ${app.householdIncome ? `<div class="detail-row"><span>Household Income:</span><strong>KES ${app.householdIncome.toLocaleString()}</strong></div>` : ''}
+                        <div class="detail-row"><span>Processing Time:</span><strong>5-7 business days</strong></div>
+                    </div>
+                </div>
+            `;
+            
+            // Generate QR for this application
+            let qrDiv = document.getElementById('qrContainer');
+            qrDiv.innerHTML = '<h4>Application QR Code</h4>';
+            new QRCode(qrDiv, { text: `VERIFY-${app.id}-${app.status}`, width: 120, height: 120 });
+        }
+        
+        function viewDetails(appId) {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let app = apps.find(a => a.id === appId);
+            document.getElementById('searchId').value = appId;
+            trackStatus();
+            document.getElementById('statusResult').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function logout() { localStorage.removeItem('currentApplicant'); window.location.href = 'index.html'; }
+        
+        loadAllApplications();
+        window.loadAllApplications = loadAllApplications;
+        window.trackStatus = trackStatus;
+        window.viewDetails = viewDetails;
+        window.logout = logout;
+        // Add this inside the existing script tag
+function updateSidebarAvatar() {
+    let savedPhoto = localStorage.getItem('userProfilePhoto');
+    let sidebarAvatar = document.getElementById('sidebarAvatar');
+    let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+    
+    if(savedPhoto && sidebarAvatar) {
+        sidebarAvatar.src = savedPhoto;
+    } else if(sidebarAvatar && currentUser) {
+        sidebarAvatar.src = `https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=${encodeURIComponent(currentUser.fullname || 'User')}`;
+    }
+}
+
+// Call this function after loading currentUser
+updateSidebarAvatar();
+    </script>
+</body>
+</html>

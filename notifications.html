@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Notifications | TVET Bursary System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <script>if(!localStorage.getItem('currentApplicant')) window.location.href = 'index.html';</script>
+
+    <div class="sidebar">
+        <div class="logo-area"><h2>SMART TVET<span>System</span></h2><small>Student Portal</small></div>
+        <div class="user-header"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=User" class="user-avatar" id="sidebarAvatar"><h4 id="userName">Loading...</h4><small id="userEmail">Student</small></div>
+        <nav class="nav-menu">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="apply-loan.html"><i class="fas fa-money-bill-wave"></i> Apply for Loan</a>
+            <a href="apply-scholarship.html"><i class="fas fa-graduation-cap"></i> Scholarship/Bursary</a>
+            <a href="status.html"><i class="fas fa-chart-line"></i> Application Status</a>
+            <a href="documents.html"><i class="fas fa-file-upload"></i> My Documents</a>
+            <a href="repayment.html"><i class="fas fa-coins"></i> Repayment Info</a>
+            <a href="profile.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i> Light Mode</button>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar">
+            <div><h1 class="page-title">Notifications</h1><p class="page-subtitle">Stay updated with your application status</p></div>
+            <button onclick="markAllAsRead()" class="btn-outline-sm"><i class="fas fa-check-double"></i> Mark all read</button>
+        </div>
+
+        <div class="form-container" style="max-width: 800px;">
+            <div id="notificationsList" class="notifications-full-list">
+                <!-- Notifications will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="theme.js"></script>
+    <script src="mobile.js"></script>
+    <script src="notifications.js"></script>
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+        document.getElementById('userName').innerText = currentUser.fullname || 'Student';
+        document.getElementById('userEmail').innerText = currentUser.email || '';
+
+        function loadAllNotifications() {
+            let notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+            let userNotifications = notifications.filter(n => n.userId === (currentUser.email || currentUser.uid));
+            
+            let container = document.getElementById('notificationsList');
+            
+            if(userNotifications.length === 0) {
+                container.innerHTML = `
+                    <div class="notification-empty-state">
+                        <i class="fas fa-bell-slash" style="font-size: 48px; color: var(--text-secondary);"></i>
+                        <h3>No notifications yet</h3>
+                        <p>When you receive updates about your applications, they will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = userNotifications.map(n => `
+                <div class="notification-card ${n.read ? 'read' : 'unread'}" data-id="${n.id}">
+                    <div class="notification-icon">
+                        <i class="fas ${n.type === 'status' ? 'fa-chart-line' : n.type === 'welcome' ? 'fa-smile' : n.type === 'login' ? 'fa-sign-in-alt' : 'fa-bell'}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-message">${escapeHtml(n.message)}</div>
+                        <div class="notification-time">${new Date(n.createdAt).toLocaleString()}</div>
+                    </div>
+                    ${!n.read ? `<button class="mark-read-btn-small" onclick="markSingleAsRead(${n.id})"><i class="fas fa-check"></i></button>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function markSingleAsRead(id) {
+            let notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+            let index = notifications.findIndex(n => n.id == id);
+            if(index !== -1) {
+                notifications[index].read = true;
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+                loadAllNotifications();
+                if(window.loadNotifications) window.loadNotifications();
+            }
+        }
+        
+        function markAllAsRead() {
+            let notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+            notifications = notifications.map(n => {
+                if(n.userId === (currentUser.email || currentUser.uid)) {
+                    n.read = true;
+                }
+                return n;
+            });
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            loadAllNotifications();
+            if(window.loadNotifications) window.loadNotifications();
+            if(window.showToast) window.showToast('All notifications marked as read', 'success');
+        }
+        
+        function updateSidebarAvatar() {
+            let savedPhoto = localStorage.getItem('userProfilePhoto');
+            let sidebarAvatar = document.getElementById('sidebarAvatar');
+            if(savedPhoto && sidebarAvatar) {
+                sidebarAvatar.src = savedPhoto;
+            } else if(sidebarAvatar && currentUser) {
+                sidebarAvatar.src = `https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=${encodeURIComponent(currentUser.fullname || 'User')}`;
+            }
+        }
+        
+        function logout() { 
+            localStorage.removeItem('currentApplicant'); 
+            window.location.href = 'index.html'; 
+        }
+        
+        updateSidebarAvatar();
+        loadAllNotifications();
+        
+        window.markSingleAsRead = markSingleAsRead;
+        window.markAllAsRead = markAllAsRead;
+        window.logout = logout;
+    </script>
+</body>
+</html>
