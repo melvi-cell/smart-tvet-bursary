@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | TVET Bursary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <script>if(!localStorage.getItem('currentApplicant')) window.location.href = 'index.html';</script>
+
+    <div class="sidebar">
+        <div class="logo-area"><h2>TVET<span>Bursary</span></h2><small>Applicant Portal</small></div>
+        <div class="user-header"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=User" class="user-avatar"><h4 id="userName">Loading...</h4><small id="userEmail">Applicant</small></div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="apply.html"><i class="fas fa-file-alt"></i> Apply for Bursary</a>
+            <a href="status.html"><i class="fas fa-chart-line"></i> Track Status</a>
+            <a href="profile.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i> Light Mode</button>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar"><div><h1 class="page-title">My Dashboard</h1><p class="page-subtitle">Welcome back to your bursary portal</p></div></div>
+
+        <div class="stats-grid">
+            <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-file-alt"></i></div><div><h3>My Applications</h3><div class="stat-number" id="myAppsCount">0</div></div></div>
+            <div class="stat-card success"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div><h3>Approved</h3><div class="stat-number" id="approvedCount">0</div></div></div>
+            <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-hourglass-half"></i></div><div><h3>Pending</h3><div class="stat-number" id="pendingCount">0</div></div></div>
+            <div class="stat-card info"><div class="stat-icon"><i class="fas fa-coins"></i></div><div><h3>Total Awarded</h3><div class="stat-number" id="totalAwarded">KES 0</div></div></div>
+        </div>
+
+        <div class="ai-card">
+            <div class="ai-header"><i class="fas fa-robot"></i><div><h3>AI Eligibility Checker</h3><p>Check if you qualify for bursary</p></div></div>
+            <div class="ai-form">
+                <div class="input-group"><input type="number" id="annualIncome" placeholder="Annual Household Income (KES)"><i class="fas fa-money-bill-wave"></i></div>
+                <div class="input-group"><input type="number" id="academicScore" placeholder="Academic Score (0-100)"><i class="fas fa-star"></i></div>
+                <button onclick="checkEligibility()" class="btn-gradient"><i class="fas fa-magic"></i> Check Eligibility</button>
+            </div>
+            <div id="eligibilityResult"></div>
+        </div>
+
+        <div class="data-table-container" style="background: var(--bg-light-dark); border-radius: 20px; padding: 20px;">
+            <div class="table-header"><h3><i class="fas fa-history"></i> My Recent Applications</h3><button onclick="loadMyApps()" class="btn-outline-sm">Refresh</button></div>
+            <div class="table-responsive"><table class="data-table"><thead><tr><th>ID</th><th>Institution</th><th>Amount</th><th>Status</th><th>Date</th><th>QR</th></tr></thead><tbody id="myAppsBody"></tbody></table></div>
+        </div>
+    </main>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="theme.js"></script>
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+        document.getElementById('userName').innerText = currentUser.fullname || 'User';
+        document.getElementById('userEmail').innerText = currentUser.email || '';
+
+        function loadMyApps() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let myApps = apps.filter(a => a.email === currentUser.email || a.nationalId === currentUser.nationalId);
+            document.getElementById('myAppsCount').innerText = myApps.length;
+            document.getElementById('approvedCount').innerText = myApps.filter(a => a.status === 'approved').length;
+            document.getElementById('pendingCount').innerText = myApps.filter(a => a.status === 'pending').length;
+            let total = myApps.filter(a => a.status === 'approved').reduce((sum, a) => sum + (a.amount || 0), 0);
+            document.getElementById('totalAwarded').innerHTML = `KES ${total.toLocaleString()}`;
+            
+            let body = document.getElementById('myAppsBody');
+            body.innerHTML = '';
+            myApps.slice(-5).reverse().forEach(app => {
+                body.innerHTML += `<tr><td class="app-id">${app.id}</td><td>${app.institution}</td><td>KES ${(app.amount || 0).toLocaleString()}</td><td><span class="status-badge ${app.status}">${app.status}</span></td><td>${new Date(app.submittedAt || app.date).toLocaleDateString()}</td><td><div class="mini-qr" data-id="${app.id}"></div></td></tr>`;
+            });
+            setTimeout(() => { document.querySelectorAll('.mini-qr').forEach(el => { if(el.dataset.id && !el.hasChildNodes()) new QRCode(el, { text: `APP-${el.dataset.id}`, width: 40, height: 40 }); }); }, 100);
+        }
+
+        function checkEligibility() {
+            let income = document.getElementById('annualIncome').value;
+            let score = document.getElementById('academicScore').value;
+            let result = document.getElementById('eligibilityResult');
+            if(!income || !score) { result.innerHTML = '<div class="alert-error">Please enter both fields</div>'; return; }
+            if(income < 300000 && score >= 60) result.innerHTML = '<div class="alert-success">Highly Eligible! You likely qualify for full bursary.</div>';
+            else if(income < 500000 && score >= 50) result.innerHTML = '<div class="alert-warning">Partially Eligible.</div>';
+            else result.innerHTML = '<div class="alert-error">Low Eligibility.</div>';
+            setTimeout(() => result.innerHTML = '', 4000);
+        }
+
+        function logout() { localStorage.removeItem('currentApplicant'); window.location.href = 'index.html'; }
+        
+        loadMyApps();
+        window.loadMyApps = loadMyApps;
+        window.checkEligibility = checkEligibility;
+        window.logout = logout;
+    </script>
+</body>
+</html>

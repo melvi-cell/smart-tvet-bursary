@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Bursary | TVET Bursary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <script>if(!localStorage.getItem('currentApplicant')) window.location.href = 'index.html';</script>
+
+    <div class="sidebar">
+        <div class="logo-area"><h2>TVET<span>Bursary</span></h2><small>Applicant Portal</small></div>
+        <div class="user-header"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=User" class="user-avatar"><h4 id="userName">Loading...</h4><small id="userEmail">Applicant</small></div>
+        <nav class="nav-menu">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="apply.html" class="active"><i class="fas fa-file-alt"></i> Apply for Bursary</a>
+            <a href="status.html"><i class="fas fa-chart-line"></i> Track Status</a>
+            <a href="profile.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i> Light Mode</button>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar"><div><h1 class="page-title">Bursary Application</h1><p class="page-subtitle">Complete the form below to apply for financial assistance</p></div></div>
+
+        <div class="stats-grid">
+            <div class="stat-card info"><div class="stat-icon"><i class="fas fa-info-circle"></i></div><div><h3>Maximum Amount</h3><div class="stat-number">KES 150,000</div></div></div>
+            <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-clock"></i></div><div><h3>Deadline</h3><div class="stat-number">Mar 30, 2025</div></div></div>
+            <div class="stat-card success"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div><h3>Processing Time</h3><div class="stat-number">5-7 Days</div></div></div>
+        </div>
+
+        <div class="form-container" style="max-width: 800px;">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%;"></div></div>
+            <form id="applicationForm">
+                <div class="form-section"><h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+                    <div class="form-row"><div class="form-group"><label>Full Name *</label><input type="text" id="fullName" required></div><div class="form-group"><label>National ID *</label><input type="text" id="nationalId" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>Email *</label><input type="email" id="email" required></div><div class="form-group"><label>Phone *</label><input type="tel" id="phone" required></div></div>
+                </div>
+                <div class="form-section"><h3><i class="fas fa-university"></i> Academic Information</h3>
+                    <div class="form-row"><div class="form-group"><label>Institution *</label><input type="text" id="institution" required></div><div class="form-group"><label>Course *</label><input type="text" id="course" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>Year of Study *</label><select id="yearOfStudy"><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option></select></div><div class="form-group"><label>Admission Number *</label><input type="text" id="admissionNo" required></div></div>
+                </div>
+                <div class="form-section"><h3><i class="fas fa-coins"></i> Financial Information</h3>
+                    <div class="form-row"><div class="form-group"><label>Amount Requested (KES) *</label><input type="number" id="amount" required min="10000" max="150000"></div><div class="form-group"><label>Household Income (KES) *</label><input type="number" id="householdIncome" required></div></div>
+                    <div class="form-group"><label>Reason for Application *</label><textarea id="reason" rows="4" required></textarea></div>
+                </div>
+                <div class="checkbox-group"><label><input type="checkbox" id="declaration" required> I declare that all information provided is true and accurate.</label></div>
+                <button type="submit" class="btn-primary btn-full"><i class="fas fa-paper-plane"></i> Submit Application</button>
+                <div id="appMsg"></div>
+            </form>
+        </div>
+    </main>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="theme.js"></script>
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+        document.getElementById('userName').innerText = currentUser.fullname || 'User';
+        document.getElementById('userEmail').innerText = currentUser.email || '';
+        
+        document.getElementById('fullName').value = currentUser.fullname || '';
+        document.getElementById('nationalId').value = currentUser.nationalId || '';
+        document.getElementById('email').value = currentUser.email || '';
+        document.getElementById('phone').value = currentUser.phone || '';
+        document.getElementById('institution').value = currentUser.institution || '';
+
+        function updateProgress() {
+            let fields = ['fullName', 'nationalId', 'email', 'phone', 'institution', 'course', 'admissionNo', 'amount', 'householdIncome', 'reason'];
+            let filled = fields.filter(f => document.getElementById(f) && document.getElementById(f).value.trim() !== '').length;
+            document.getElementById('progressFill').style.width = Math.round((filled / fields.length) * 100) + '%';
+        }
+        document.querySelectorAll('#applicationForm input, #applicationForm textarea, #applicationForm select').forEach(el => { el.addEventListener('input', updateProgress); el.addEventListener('change', updateProgress); });
+        updateProgress();
+
+        document.getElementById('applicationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            let applications = JSON.parse(localStorage.getItem('applications')) || [];
+            let newApp = {
+                id: 'APP-' + Date.now(),
+                fullname: document.getElementById('fullName').value,
+                nationalId: document.getElementById('nationalId').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                institution: document.getElementById('institution').value,
+                course: document.getElementById('course').value,
+                yearOfStudy: document.getElementById('yearOfStudy').value,
+                admissionNo: document.getElementById('admissionNo').value,
+                amount: parseInt(document.getElementById('amount').value),
+                householdIncome: parseInt(document.getElementById('householdIncome').value),
+                reason: document.getElementById('reason').value,
+                status: 'pending',
+                submittedAt: new Date().toISOString()
+            };
+            applications.push(newApp);
+            localStorage.setItem('applications', JSON.stringify(applications));
+            if(window.sendStatusUpdateEmail) {
+                await window.sendStatusUpdateEmail(newApp.email, newApp.fullname, newApp.id, 'submitted', 'Application received');
+            }
+            document.getElementById('appMsg').innerHTML = '<div class="alert-success">Application submitted successfully!</div>';
+            setTimeout(() => { window.location.href = 'status.html'; }, 2000);
+        });
+
+        function logout() { localStorage.removeItem('currentApplicant'); window.location.href = 'index.html'; }
+        window.logout = logout;
+    </script>
+</body>
+</html>
