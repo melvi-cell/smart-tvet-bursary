@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | HELB System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <script>if(!localStorage.getItem('currentApplicant')) window.location.href = 'index.html';</script>
+
+    <div class="sidebar">
+        <div class="logo-area"><h2>HELB<span>System</span></h2><small>Student Portal</small></div>
+        <div class="user-header"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=User" class="user-avatar" id="sidebarAvatar"><h4 id="userName">Loading...</h4><small id="userEmail">Student</small></div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="apply-loan.html"><i class="fas fa-money-bill-wave"></i> Apply for Loan</a>
+            <a href="apply-scholarship.html"><i class="fas fa-graduation-cap"></i> Scholarship/Bursary</a>
+            <a href="status.html"><i class="fas fa-chart-line"></i> Application Status</a>
+            <a href="documents.html"><i class="fas fa-file-upload"></i> My Documents</a>
+            <a href="repayment.html"><i class="fas fa-coins"></i> Repayment Info</a>
+            <a href="profile.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i> Light Mode</button>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar">
+            <div><h1 class="page-title">Student Dashboard</h1><p class="page-subtitle">Welcome back, <span id="welcomeName">Student</span></p></div>
+            <div class="notification-bell"><i class="fas fa-bell"></i><span class="badge" id="notifCount">3</span></div>
+        </div>
+
+        <!-- Financial Summary Cards -->
+        <div class="stats-grid">
+            <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-hand-holding-usd"></i></div><div><h3>Total Loan Disbursed</h3><div class="stat-number" id="totalLoan">KES 0</div></div></div>
+            <div class="stat-card success"><div class="stat-icon"><i class="fas fa-gift"></i></div><div><h3>Scholarship/Bursary</h3><div class="stat-number" id="totalScholarship">KES 0</div></div></div>
+            <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div><h3>Outstanding Balance</h3><div class="stat-number" id="outstanding">KES 0</div></div></div>
+            <div class="stat-card info"><div class="stat-icon"><i class="fas fa-calendar"></i></div><div><h3>Next Repayment</h3><div class="stat-number" id="nextPayment">-</div></div></div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="action-card" onclick="location.href='apply-loan.html'"><i class="fas fa-money-bill-wave"></i><h4>Apply for Loan</h4><p>Tuition & Upkeep</p></div>
+            <div class="action-card" onclick="location.href='apply-scholarship.html'"><i class="fas fa-graduation-cap"></i><h4>Scholarship/Bursary</h4><p>Financial Aid</p></div>
+            <div class="action-card" onclick="location.href='documents.html'"><i class="fas fa-file-upload"></i><h4>Upload Documents</h4><p>Supporting Files</p></div>
+            <div class="action-card" onclick="location.href='repayment.html'"><i class="fas fa-coins"></i><h4>Make Payment</h4><p>Loan Repayment</p></div>
+        </div>
+
+        <!-- Application Status Overview -->
+        <div class="data-table-container">
+            <div class="table-header"><h3><i class="fas fa-file-alt"></i> My Applications</h3><button onclick="loadApplications()" class="btn-outline-sm"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+            <div class="table-responsive"><table class="data-table"><thead><tr><th>Application ID</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody id="applicationsBody"></tbody></table></div>
+        </div>
+
+        <!-- Loan Repayment Schedule -->
+        <div class="data-table-container" style="margin-top: 20px;">
+            <div class="table-header"><h3><i class="fas fa-calendar-alt"></i> Repayment Schedule</h3></div>
+            <div class="table-responsive"><table class="data-table"><thead><tr><th>Due Date</th><th>Amount Due</th><th>Status</th><th>Action</th></tr></thead><tbody id="repaymentBody"></tbody></table></div>
+        </div>
+    </main>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="theme.js"></script>
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+        document.getElementById('userName').innerText = currentUser.fullname || 'Student';
+        document.getElementById('userEmail').innerText = currentUser.email || '';
+        document.getElementById('welcomeName').innerText = currentUser.fullname?.split(' ')[0] || 'Student';
+
+        // Update sidebar avatar with uploaded photo
+        function updateSidebarAvatar() {
+            let savedPhoto = localStorage.getItem('userProfilePhoto');
+            let sidebarAvatar = document.getElementById('sidebarAvatar');
+            
+            if(savedPhoto && sidebarAvatar) {
+                sidebarAvatar.src = savedPhoto;
+            } else if(sidebarAvatar && currentUser) {
+                sidebarAvatar.src = `https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=${encodeURIComponent(currentUser.fullname || 'User')}`;
+            }
+        }
+
+        // Load all applications
+        function loadApplications() {
+            let apps = JSON.parse(localStorage.getItem('applications')) || [];
+            let userApps = apps.filter(a => a.email === currentUser.email || a.nationalId === currentUser.nationalId);
+            
+            let totalLoan = userApps.filter(a => a.type === 'loan' && a.status === 'approved').reduce((s,a) => s + (a.amount||0), 0);
+            let totalScholarship = userApps.filter(a => a.type === 'scholarship' && a.status === 'approved').reduce((s,a) => s + (a.amount||0), 0);
+            document.getElementById('totalLoan').innerHTML = `KES ${totalLoan.toLocaleString()}`;
+            document.getElementById('totalScholarship').innerHTML = `KES ${totalScholarship.toLocaleString()}`;
+            document.getElementById('outstanding').innerHTML = `KES ${(totalLoan * 0.7).toLocaleString()}`;
+            
+            let body = document.getElementById('applicationsBody');
+            body.innerHTML = '';
+            userApps.slice().reverse().forEach(app => {
+                let typeIcon = app.type === 'loan' ? '💰' : '🎓';
+                body.innerHTML += `<tr>
+                    <td class="app-id">${app.id}</td>
+                    <td>${typeIcon} ${app.type === 'loan' ? 'Loan' : (app.type === 'scholarship' ? 'Scholarship' : 'Bursary')}</td>
+                    <td class="amount">KES ${(app.amount || 0).toLocaleString()}</td>
+                    <td><span class="status-badge ${app.status}">${app.status}</span></td>
+                    <td>${new Date(app.submittedAt).toLocaleDateString()}</td>
+                    <td><button class="btn-outline-sm" onclick="trackStatus('${app.id}')">Track</button></td>
+                </tr>`;
+            });
+            if(userApps.length === 0) { body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">No applications yet. Apply for a loan or scholarship!<!xhtml> <td><tr>'; }
+        }
+
+        // Load repayment schedule
+        function loadRepaymentSchedule() {
+            let repayments = JSON.parse(localStorage.getItem('repayments')) || [];
+            let userRepayments = repayments.filter(r => r.email === currentUser.email);
+            let body = document.getElementById('repaymentBody');
+            body.innerHTML = '';
+            if(userRepayments.length === 0) {
+                body.innerHTML = '</table><td colspan="4" style="text-align:center; padding:40px;">No repayment schedule available. Loan repayment starts after graduation.<!xhtml> <td><tr>';
+            } else {
+                userRepayments.forEach(rep => {
+                    let statusClass = rep.status === 'paid' ? 'status-badge approved' : 'status-badge pending';
+                    body.innerHTML += `<tr>
+                        <td>${rep.dueDate}</td>
+                        <td class="amount">KES ${rep.amount.toLocaleString()}</td>
+                        <td><span class="${statusClass}">${rep.status}</span></td>
+                        <td>${rep.status === 'pending' ? `<button class="btn-primary-sm" onclick="makePayment('${rep.id}')">Pay Now</button>` : '✓ Paid'}</td>
+                    </tr>`;
+                });
+            }
+        }
+
+        function trackStatus(appId) { window.location.href = `status.html?app=${appId}`; }
+        function makePayment(id) { alert(`Payment portal for repayment ${id} would open here.`); }
+        function logout() { localStorage.removeItem('currentApplicant'); window.location.href = 'index.html'; }
+        
+        // Call avatar update
+        updateSidebarAvatar();
+        loadApplications();
+        loadRepaymentSchedule();
+        
+        window.loadApplications = loadApplications;
+        window.trackStatus = trackStatus;
+        window.logout = logout;
+    </script>
+</body>
+</html>
