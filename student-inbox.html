@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>My Inbox | SMART TVET System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <script>if(!localStorage.getItem('currentApplicant')) window.location.href = 'index.html';</script>
+
+    <div class="mobile-menu-toggle" id="mobileMenuToggle"><i class="fas fa-bars"></i></div>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <div class="sidebar">
+        <div class="logo-area"><h2>SMART TVET<span>System</span></h2><small>Student Portal</small></div>
+        <div class="user-header"><img src="https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=User" class="user-avatar" id="sidebarAvatar"><h4 id="userName">Loading...</h4><small id="userEmail">Student</small></div>
+        <nav class="nav-menu">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="apply-loan.html"><i class="fas fa-money-bill-wave"></i> Apply for Loan</a>
+            <a href="apply-scholarship.html"><i class="fas fa-graduation-cap"></i> Scholarship/Bursary</a>
+            <a href="status.html"><i class="fas fa-chart-line"></i> Application Status</a>
+            <a href="documents.html"><i class="fas fa-file-upload"></i> My Documents</a>
+            <a href="student-inbox.html" class="active"><i class="fas fa-envelope"></i> My Inbox <span id="inboxBadge" class="badge" style="display:none;">0</span></a>
+            <a href="repayment.html"><i class="fas fa-coins"></i> Repayment Info</a>
+            <a href="profile.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <button id="darkModeToggle" class="dark-mode-btn"><i class="fas fa-sun"></i> Light Mode</button>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar">
+            <div><h1 class="page-title">My Inbox</h1><p class="page-subtitle">Emails from TVET Bursary Administration</p></div>
+            <button onclick="refreshInbox()" class="btn-outline-sm"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+
+        <!-- Email Stats -->
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-card primary"><div class="stat-icon"><i class="fas fa-envelope"></i></div><div><h3>Total</h3><div class="stat-number" id="totalEmails">0</div></div></div>
+            <div class="stat-card warning"><div class="stat-icon"><i class="fas fa-envelope-open"></i></div><div><h3>Unread</h3><div class="stat-number" id="unreadEmails">0</div></div></div>
+            <div class="stat-card success"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div><h3>Read</h3><div class="stat-number" id="readEmails">0</div></div></div>
+            <div class="stat-card info"><div class="stat-icon"><i class="fas fa-paper-plane"></i></div><div><h3>Sent</h3><div class="stat-number" id="sentEmails">0</div></div></div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="email-tabs">
+            <button class="email-tab active" onclick="filterEmails('all')"><i class="fas fa-inbox"></i> All</button>
+            <button class="email-tab" onclick="filterEmails('unread')"><i class="fas fa-envelope"></i> Unread</button>
+            <button class="email-tab" onclick="filterEmails('read')"><i class="fas fa-check-circle"></i> Read</button>
+            <button class="email-tab" onclick="filterEmails('sent')"><i class="fas fa-paper-plane"></i> Sent</button>
+        </div>
+
+        <!-- Email List -->
+        <div class="email-list-container">
+            <div id="emailList" class="email-list">
+                <!-- Emails will be loaded here -->
+                <div class="loading-emails">Loading your messages...</div>
+            </div>
+        </div>
+
+        <!-- Email Detail Modal -->
+        <div id="emailModal" class="modal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3 id="modalSubject">Email Subject</h3>
+                    <span class="close" onclick="closeEmailModal()">&times;</span>
+                </div>
+                <div id="emailDetailBody" class="email-detail-body"></div>
+                <div class="modal-footer">
+                    <button class="btn-outline-sm" onclick="replyToEmail()"><i class="fas fa-reply"></i> Reply</button>
+                    <button class="btn-danger-sm" onclick="deleteEmail()"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="btn-outline-sm" onclick="closeEmailModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compose Email Modal -->
+        <div id="composeModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-paper-plane"></i> Compose Message</h3>
+                    <span class="close" onclick="closeComposeModal()">&times;</span>
+                </div>
+                <div class="compose-body">
+                    <div class="form-group">
+                        <label>To:</label>
+                        <input type="email" id="composeTo" value="admin@tvet.go.ke" readonly style="background: var(--bg-dark);">
+                    </div>
+                    <div class="form-group">
+                        <label>Subject:</label>
+                        <input type="text" id="composeSubject" placeholder="Enter subject">
+                    </div>
+                    <div class="form-group">
+                        <label>Message:</label>
+                        <textarea id="composeMessage" rows="8" placeholder="Type your message here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" onclick="sendReply()"><i class="fas fa-paper-plane"></i> Send Message</button>
+                    <button class="btn-outline" onclick="closeComposeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="firebase-config.js"></script>
+    <script src="email-service.js"></script>
+    <script src="theme.js"></script>
+    <script src="mobile.js"></script>
+    <script>
+        let currentUser = null;
+        let allEmails = [];
+        let currentFilter = 'all';
+        let currentEmail = null;
+
+        // Initialize
+        currentUser = JSON.parse(localStorage.getItem('currentApplicant'));
+        document.getElementById('userName').innerText = currentUser.fullname || 'Student';
+        document.getElementById('userEmail').innerText = currentUser.email || '';
+
+        function updateSidebarAvatar() {
+            let savedPhoto = localStorage.getItem('userProfilePhoto');
+            let sidebarAvatar = document.getElementById('sidebarAvatar');
+            if(savedPhoto && sidebarAvatar) {
+                sidebarAvatar.src = savedPhoto;
+            } else if(sidebarAvatar && currentUser) {
+                sidebarAvatar.src = `https://ui-avatars.com/api/?background=1e5a8a&color=fff&name=${encodeURIComponent(currentUser.fullname || 'User')}`;
+            }
+        }
+        updateSidebarAvatar();
+
+        // Load emails from localStorage (synced with admin emails)
+        function loadEmails() {
+            let allMessages = JSON.parse(localStorage.getItem('studentEmails')) || [];
+            allEmails = allMessages.filter(email => email.recipient === currentUser.email || email.sender === currentUser.email);
+            
+            // Also sync from notifications that are status updates
+            let notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+            let statusNotifications = notifications.filter(n => n.userId === currentUser.email && n.type === 'status');
+            
+            statusNotifications.forEach(notif => {
+                if (!allEmails.find(e => e.subject === notif.message && e.timestamp === notif.createdAt)) {
+                    allEmails.push({
+                        id: 'notif-' + notif.id,
+                        subject: 'Application Status Update',
+                        message: notif.message,
+                        from: 'TVET Bursary System',
+                        fromEmail: 'admin@tvet.go.ke',
+                        recipient: currentUser.email,
+                        timestamp: notif.createdAt,
+                        read: notif.read,
+                        type: 'status'
+                    });
+                }
+            });
+            
+            // Sort by date (newest first)
+            allEmails.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            updateStats();
+            renderEmailList();
+        }
+
+        function updateStats() {
+            let received = allEmails.filter(e => e.recipient === currentUser.email);
+            let unread = received.filter(e => !e.read).length;
+            let read = received.filter(e => e.read).length;
+            let sent = allEmails.filter(e => e.sender === currentUser.email).length;
+            
+            document.getElementById('totalEmails').innerText = received.length;
+            document.getElementById('unreadEmails').innerText = unread;
+            document.getElementById('readEmails').innerText = read;
+            document.getElementById('sentEmails').innerText = sent;
+            
+            // Update sidebar badge
+            let badge = document.getElementById('inboxBadge');
+            if(badge) {
+                if(unread > 0) {
+                    badge.innerText = unread > 9 ? '9+' : unread;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        function renderEmailList() {
+            let container = document.getElementById('emailList');
+            let filteredEmails = allEmails;
+            
+            if (currentFilter === 'unread') {
+                filteredEmails = allEmails.filter(e => e.recipient === currentUser.email && !e.read);
+            } else if (currentFilter === 'read') {
+                filteredEmails = allEmails.filter(e => e.recipient === currentUser.email && e.read);
+            } else if (currentFilter === 'sent') {
+                filteredEmails = allEmails.filter(e => e.sender === currentUser.email);
+            }
+            
+            if (filteredEmails.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-inbox">
+                        <i class="fas fa-inbox" style="font-size: 48px; color: var(--text-secondary);"></i>
+                        <h3>Your inbox is empty</h3>
+                        <p>When you receive emails from the administration, they will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filteredEmails.map(email => {
+                let isReceived = email.recipient === currentUser.email;
+                let isUnread = isReceived && !email.read;
+                let icon = isReceived ? (isUnread ? 'fa-envelope' : 'fa-envelope-open') : 'fa-paper-plane';
+                let fromTo = isReceived ? `From: ${email.from || email.fromEmail || 'Admin'}` : `To: ${email.recipient}`;
+                let preview = email.message ? email.message.substring(0, 100) + (email.message.length > 100 ? '...' : '') : '';
+                
+                return `
+                    <div class="email-item ${isUnread ? 'unread' : ''}" onclick="viewEmail('${email.id}')">
+                        <div class="email-icon"><i class="fas ${icon}"></i></div>
+                        <div class="email-content">
+                            <div class="email-header">
+                                <span class="email-from">${fromTo}</span>
+                                <span class="email-date">${formatDate(email.timestamp)}</span>
+                            </div>
+                            <div class="email-subject">${escapeHtml(email.subject)}</div>
+                            <div class="email-preview">${escapeHtml(preview)}</div>
+                        </div>
+                        ${isUnread ? '<div class="email-unread-dot"></div>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function viewEmail(emailId) {
+            currentEmail = allEmails.find(e => e.id === emailId);
+            if (!currentEmail) return;
+            
+            // Mark as read
+            if (currentEmail.recipient === currentUser.email && !currentEmail.read) {
+                currentEmail.read = true;
+                saveEmails();
+                updateStats();
+                renderEmailList();
+            }
+            
+            document.getElementById('modalSubject').innerText = currentEmail.subject;
+            document.getElementById('emailDetailBody').innerHTML = `
+                <div class="email-meta">
+                    <div><strong>From:</strong> ${currentEmail.from || currentEmail.fromEmail || 'TVET Bursary System'}</div>
+                    <div><strong>To:</strong> ${currentEmail.recipient}</div>
+                    <div><strong>Date:</strong> ${new Date(currentEmail.timestamp).toLocaleString()}</div>
+                </div>
+                <div class="email-message-body">
+                    ${escapeHtml(currentEmail.message).replace(/\n/g, '<br>')}
+                </div>
+            `;
+            document.getElementById('emailModal').style.display = 'flex';
+        }
+
+        function replyToEmail() {
+            document.getElementById('composeSubject').value = currentEmail ? `Re: ${currentEmail.subject}` : '';
+            document.getElementById('composeMessage').value = '';
+            document.getElementById('composeTo').value = 'admin@tvet.go.ke';
+            closeEmailModal();
+            document.getElementById('composeModal').style.display = 'flex';
+        }
+
+        async function sendReply() {
+            const subject = document.getElementById('composeSubject').value;
+            const message = document.getElementById('composeMessage').value;
+            const toEmail = document.getElementById('composeTo').value;
+            
+            if (!subject || !message) {
+                alert('Please enter both subject and message');
+                return;
+            }
+            
+            // Save to localStorage
+            let allMessages = JSON.parse(localStorage.getItem('studentEmails')) || [];
+            let newEmail = {
+                id: 'msg-' + Date.now(),
+                subject: subject,
+                message: message,
+                from: currentUser.fullname,
+                fromEmail: currentUser.email,
+                recipient: toEmail,
+                timestamp: new Date().toISOString(),
+                read: false,
+                type: 'reply'
+            };
+            allMessages.push(newEmail);
+            localStorage.setItem('studentEmails', JSON.stringify(allMessages));
+            
+            // Also add to admin's view (store in separate admin inbox)
+            let adminEmails = JSON.parse(localStorage.getItem('adminEmails')) || [];
+            adminEmails.push(newEmail);
+            localStorage.setItem('adminEmails', JSON.stringify(adminEmails));
+            
+            // Send actual email via EmailJS
+            if (window.sendEmail) {
+                try {
+                    await window.sendEmail(toEmail, subject, message);
+                } catch(e) { console.log("Email send error:", e); }
+            }
+            
+            // Add notification
+            window.addNotification(toEmail, 'email', `New message from ${currentUser.fullname}: ${subject}`);
+            
+            alert('Message sent successfully!');
+            closeComposeModal();
+            loadEmails();
+        }
+
+        function deleteEmail() {
+            if (!currentEmail) return;
+            if (confirm('Delete this message?')) {
+                let allMessages = JSON.parse(localStorage.getItem('studentEmails')) || [];
+                allMessages = allMessages.filter(e => e.id !== currentEmail.id);
+                localStorage.setItem('studentEmails', JSON.stringify(allMessages));
+                closeEmailModal();
+                loadEmails();
+            }
+        }
+
+        function filterEmails(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.email-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            renderEmailList();
+        }
+
+        function refreshInbox() {
+            loadEmails();
+            showToast('Inbox refreshed', 'success');
+        }
+
+        function saveEmails() {
+            let allMessages = JSON.parse(localStorage.getItem('studentEmails')) || [];
+            allMessages = allMessages.map(e => {
+                let existing = allEmails.find(ae => ae.id === e.id);
+                if (existing && existing.read !== e.read) {
+                    return existing;
+                }
+                return e;
+            });
+            localStorage.setItem('studentEmails', JSON.stringify(allMessages));
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) return 'Today';
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            return date.toLocaleDateString();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type) {
+            let toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : '#1e5a8a'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 12px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function closeEmailModal() { document.getElementById('emailModal').style.display = 'none'; currentEmail = null; }
+        function closeComposeModal() { document.getElementById('composeModal').style.display = 'none'; }
+
+        function logout() { localStorage.removeItem('currentApplicant'); window.location.href = 'index.html'; }
+
+        function initMobileMenu() {
+            const toggle = document.getElementById('mobileMenuToggle');
+            const overlay = document.getElementById('mobileOverlay');
+            const sidebar = document.querySelector('.sidebar');
+            if(toggle && sidebar) {
+                toggle.addEventListener('click', () => { sidebar.classList.toggle('active'); if(overlay) overlay.classList.toggle('active'); });
+            }
+            if(overlay) {
+                overlay.addEventListener('click', () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); });
+            }
+        }
+
+        initMobileMenu();
+        loadEmails();
+
+        window.viewEmail = viewEmail;
+        window.replyToEmail = replyToEmail;
+        window.deleteEmail = deleteEmail;
+        window.filterEmails = filterEmails;
+        window.refreshInbox = refreshInbox;
+        window.sendReply = sendReply;
+        window.closeEmailModal = closeEmailModal;
+        window.closeComposeModal = closeComposeModal;
+        window.logout = logout;
+    </script>
+</body>
+</html>
